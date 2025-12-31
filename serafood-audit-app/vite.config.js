@@ -4,6 +4,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Base path - IIS'te alt klasörde çalışacaksa buraya path ekleyin (örn: '/audit/')
+  // Ana dizinde çalışacaksa '/' olarak bırakın
+  base: '/',
+
   plugins: [
     react(),
     VitePWA({
@@ -59,4 +63,25 @@ export default defineConfig({
       }
     })
   ],
+
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false,
+    minify: 'terser',
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+              return 'vendor';
+            }
+            if (id.includes('html5-qrcode')) {
+              return 'scanner';
+            }
+          }
+        }
+      }
+    }
+  }
 })

@@ -12,6 +12,14 @@ const Step2BarcodeScanner = () => {
     const navigate = useNavigate();
     const { barcodes, addBarcode, removeBarcode } = useAudit();
 
+    // Use ref to keep track of latest addBarcode function to avoid stale closures in scanner callback
+    const addBarcodeRef = useRef(addBarcode);
+
+    // Update ref whenever addBarcode changes
+    useEffect(() => {
+        addBarcodeRef.current = addBarcode;
+    }, [addBarcode]);
+
     const [manualBarcode, setManualBarcode] = useState('');
     const [scannerStarted, setScannerStarted] = useState(false);
     const [error, setError] = useState(null);
@@ -42,7 +50,7 @@ const Step2BarcodeScanner = () => {
                     fps: 10, // Frames per second
                     qrbox: { width: 250, height: 250 }, // Scanning box size
                 },
-                onScanSuccess,
+                (decodedText) => onScanSuccess(decodedText), // Wrap to ensure we use latest closure if possible, but ref is safest
                 onScanError
             );
 
@@ -66,8 +74,9 @@ const Step2BarcodeScanner = () => {
     };
 
     const onScanSuccess = (decodedText) => {
-        // Add barcode to list
-        const added = addBarcode(decodedText);
+        // Add barcode to list using the ref to ensure we have the latest state
+        const added = addBarcodeRef.current(decodedText);
+
         if (added) {
             setSuccessMessage(`Barkod eklendi: ${decodedText}`);
             setTimeout(() => setSuccessMessage(null), 2000);
